@@ -7,6 +7,10 @@ require('dotenv').config();
 
 const app = express();
 
+app.set('trust proxy', 1);
+
+app.use(express.json({ limit: '50kb' }));
+
 app.use(helmet({
   crossOriginResourcePolicy: false
 }));
@@ -39,11 +43,10 @@ app.use((req, res, next) => {
 const limitador = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
-  message: { error: 'Límite de solicitudes excedido desde esta IP. Intenta más tarde.' }
+  message: { error: 'Límite de solicitudes excedido desde esta IP. Intenta más tarde.' },
+  validate: { xForwardedForHeader: false }
 });
 app.use('/api/', limitador);
-
-app.use(express.json({ limit: '50kb' }));
 
 const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'HVFSXgdn8PgPZoPJ!T$n#';
 
@@ -52,26 +55,57 @@ app.use('/api', (req, res, next) => {
     return next();
   }
 
-  const claveCliente = req.headers['x-api-key'];
-  if (claveCliente !== API_KEY_SECRETA) {
+  // Rutas públicas que no requieren API Key
+  if (req.path === '/login' || req.path === '/registro-cliente') {
+    return next();
+  }
+
+  // Leer la clave admitiendo cualquier variante de capitalización
+  const claveCliente = req.headers['x-api-key'] || req.headers['X-Api-Key'] || req.get('x-api-key');
+
+  if (!claveCliente || claveCliente !== API_KEY_SECRETA) {
+    console.warn(`[Seguridad] 403 Bloqueado en ${req.path}. Recibido: "${claveCliente}" | Esperado: "${API_KEY_SECRETA}"`);
     return res.status(403).json({ error: 'Acceso no autorizado: API Key ausente o inválida' });
   }
+
   next();
 });
 
 app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const [rows] = await db.query(
-      'SELECT id, nombre, email, rol, referencia_id FROM usuarios WHERE email = ? AND password = ?',
-      [email, password]
-    );
-    if (rows.length === 0) {
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email y contraseña requeridos' });
+    }
+
+    const query = 'SELECT * FROM usuarios WHERE email = ? LIMIT 1';
+    const [rows] = await db.query(query, [email]);
+
+    if (!rows || rows.length === 0) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
-    res.json(rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+    const usuario = rows[0];
+
+    if (usuario.password !== password) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    res.json({
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+      referencia_id: usuario.referencia_id || usuario.id
+    });
+
+  } catch (error) {
+    console.error('Error detallado en /api/login:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor al procesar el login',
+      detalle: error.message 
+    });
   }
 });
 
