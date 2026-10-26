@@ -6,19 +6,18 @@ const db = require('./db');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
 app.use(helmet());
 
 const limitador = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 150,
+  max: 300,
   message: { error: 'Límite de solicitudes excedido desde esta IP. Intenta más tarde.' }
 });
 app.use('/api/', limitador);
 
 const origenesPermitidos = [
-  'https://necro1024.github.io/EcoMove-Tech/',
+  'https://necro1024.github.io',
   'http://localhost:5173'
 ];
 
@@ -30,10 +29,12 @@ app.use(cors({
       callback(new Error('Bloqueado por política de seguridad CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'ngrok-skip-browser-warning'],
   credentials: true
 }));
+
+app.options('*', cors());
 
 app.use((req, res, next) => {
   res.setHeader('ngrok-skip-browser-warning', 'true');
@@ -43,6 +44,10 @@ app.use((req, res, next) => {
 const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'HVFSXgdn8PgPZoPJ!T$n#';
 
 app.use('/api', (req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+
   const claveCliente = req.headers['x-api-key'];
   if (claveCliente !== API_KEY_SECRETA) {
     return res.status(403).json({ error: 'Acceso no autorizado: API Key ausente o inválida' });
