@@ -6,6 +6,7 @@ import ClientDashboard from './pages/ClientDashboard.jsx';
 import AdminDispatch from './pages/AdminDispatch.jsx';
 import TechnicianWorkspace from './pages/TechnicianWorkspace.jsx';
 import './ClientePortal.css';
+import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function App() {
   const [user, setUser] = useState(() => {
@@ -24,9 +25,9 @@ export default function App() {
     e.preventDefault();
     setErrorMsg('');
     try {
-      const res = await fetch('http://localhost:5000/api/login', {
+      const res = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ email: emailInput, password: passwordInput })
       });
       const data = await res.json();

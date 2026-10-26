@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import NuevaSolicitudWizard from './NuevaSolicitudWizard.jsx';
 import SeguimientoView from './SeguimientoView.jsx';
 import HistorialView from './HistorialView.jsx';
+import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function ClientDashboard({ user }) {
   const [subVista, setSubVista] = useState('inicio'); // 'inicio' | 'vehiculos' | 'seguimiento' | 'historial' | 'nueva_solicitud'
@@ -27,9 +28,9 @@ export default function ClientDashboard({ user }) {
   const fetchData = async () => {
     try {
       const [resVeh, resSol, resHist] = await Promise.all([
-        fetch(`http://localhost:5000/api/vehiculos/cliente/${user.referencia_id}`).then(r => r.json()),
-        fetch(`http://localhost:5000/api/solicitudes/cliente/${user.referencia_id}`).then(r => r.json()),
-        fetch(`http://localhost:5000/api/historial/${user.referencia_id}`).then(r => r.json())
+        fetch(`${API_BASE_URL}/vehiculos/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/solicitudes/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/historial/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json())
       ]);
       setVehiculos(resVeh);
       setSolicitudes(resSol);
@@ -46,15 +47,15 @@ export default function ClientDashboard({ user }) {
   const handleGuardarVehiculo = async (e) => {
     e.preventDefault();
     if (vehiculoAEditar) {
-      await fetch(`http://localhost:5000/api/vehiculos/${vehiculoAEditar.id}`, {
+      await fetch(`${API_BASE_URL}/vehiculos/${vehiculoAEditar.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(formVehiculo)
       });
     } else {
-      await fetch('http://localhost:5000/api/vehiculos', {
+      await fetch(`${API_BASE_URL}/vehiculos`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ ...formVehiculo, cliente_id: user.referencia_id })
       });
     }
@@ -67,8 +68,9 @@ export default function ClientDashboard({ user }) {
   const confirmarBajaPopUp = async () => {
     if (!vehiculoABorrar) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/vehiculos/${vehiculoABorrar.id}`, {
-        method: 'DELETE'
+      const res = await fetch(`${API_BASE_URL}/vehiculos/${vehiculoABorrar.id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
       });
       const data = await res.json();
       if (!res.ok) {

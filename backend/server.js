@@ -1,11 +1,56 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(helmet());
+
+const limitador = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  message: { error: 'Límite de solicitudes excedido desde esta IP. Intenta más tarde.' }
+});
+app.use('/api/', limitador);
+
+const origenesPermitidos = [
+  'https://necro1024.github.io/EcoMove-Tech/',
+  'http://localhost:5173'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || origenesPermitidos.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Bloqueado por política de seguridad CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'ngrok-skip-browser-warning'],
+  credentials: true
+}));
+
+app.use((req, res, next) => {
+  res.setHeader('ngrok-skip-browser-warning', 'true');
+  next();
+});
+
+const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'EcoMoveSeguro_2026_ClavePrivada';
+
+app.use('/api', (req, res, next) => {
+  const claveCliente = req.headers['x-api-key'];
+  if (claveCliente !== API_KEY_SECRETA) {
+    return res.status(403).json({ error: 'Acceso no autorizado: API Key ausente o inválida' });
+  }
+  next();
+});
+
+app.use(express.json({ limit: '50kb' }));
 
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
@@ -323,4 +368,4 @@ app.get('/api/historial/:clienteId', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
+app.listen(PORT, () => console.log(`Servidor seguro corriendo en puerto ${PORT}`));

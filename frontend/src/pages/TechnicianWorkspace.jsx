@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function TechnicianWorkspace({ user }) {
   const [ordenes, setOrdenes] = useState([]);
@@ -13,8 +14,8 @@ export default function TechnicianWorkspace({ user }) {
   const fetchData = async () => {
     try {
       const [resOrd, resRep] = await Promise.all([
-        fetch(`http://localhost:5000/api/solicitudes/tecnico/${user.referencia_id}`).then(r => r.json()),
-        fetch('http://localhost:5000/api/repuestos').then(r => r.json())
+        fetch(`${API_BASE_URL}/solicitudes/tecnico/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/repuestos`, { headers: getHeaders() }).then(r => r.json())
       ]);
       setOrdenes(resOrd);
       setCatalogoRepuestos(resRep);
@@ -28,9 +29,9 @@ export default function TechnicianWorkspace({ user }) {
   }, [user]);
 
   const handleUpdateEstado = async (id, nuevoEstado) => {
-    await fetch(`http://localhost:5000/api/solicitudes/${id}/estado`, {
+    await fetch(`${API_BASE_URL}/solicitudes/${id}/estado`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ estado_servicio: nuevoEstado })
     });
     fetchData();
@@ -90,9 +91,9 @@ export default function TechnicianWorkspace({ user }) {
     if (!ordenALiquidar) return;
     const { orden, datos } = ordenALiquidar;
 
-    await fetch(`http://localhost:5000/api/solicitudes/${orden.id}/finalizar`, {
+    await fetch(`${API_BASE_URL}/solicitudes/${orden.id}/finalizar`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({
         estado_bateria: datos.bateria,
         estado_motor: datos.motor,

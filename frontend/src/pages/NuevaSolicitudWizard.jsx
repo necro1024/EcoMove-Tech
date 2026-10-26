@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function NuevaSolicitudWizard({ user, vehiculos, onVolver, onCompletado }) {
   const [paso, setPaso] = useState(1);
@@ -26,9 +27,9 @@ export default function NuevaSolicitudWizard({ user, vehiculos, onVolver, onComp
         ? `${formData.direccion}, ${formData.distrito}, Lima` 
         : 'Taller Central - Av. La Marina 2401, San Miguel';
 
-      const res = await fetch('http://localhost:5000/api/solicitudes', {
+      const res = await fetch(`${API_BASE_URL}/solicitudes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({
           cliente_id: user.referencia_id,
           vehiculo_id: formData.vehiculo_id,

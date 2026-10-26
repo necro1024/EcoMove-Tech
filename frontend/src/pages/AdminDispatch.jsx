@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function AdminDispatch({ user }) {
   const [tabAdmin, setTabAdmin] = useState('solicitudes');
@@ -19,8 +20,8 @@ export default function AdminDispatch({ user }) {
   const fetchData = async () => {
     try {
       const [resSol, resTec] = await Promise.all([
-        fetch('http://localhost:5000/api/solicitudes/admin').then(r => r.json()),
-        fetch('http://localhost:5000/api/tecnicos').then(r => r.json())
+        fetch(`${API_BASE_URL}/solicitudes/admin`, { headers: getHeaders() }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/tecnicos`, { headers: getHeaders() }).then(r => r.json())
       ]);
       setSolicitudes(resSol);
       setTecnicos(resTec);
@@ -118,9 +119,9 @@ export default function AdminDispatch({ user }) {
     e.preventDefault();
     if (!tecnicoElegido || !ordenAsignando) return;
 
-    await fetch(`http://localhost:5000/api/solicitudes/${ordenAsignando.id}/asignar`, {
+    await fetch(`${API_BASE_URL}/solicitudes/${ordenAsignando.id}/asignar`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ tecnico_id: tecnicoElegido })
     });
 

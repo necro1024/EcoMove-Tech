@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function RegisterModal({ onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -18,9 +19,9 @@ export default function RegisterModal({ onClose, onSuccess }) {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/registro-cliente', {
+      const res = await fetch(`${API_BASE_URL}/registro-cliente`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(formData)
       });
       const data = await res.json();
