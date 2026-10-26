@@ -7,7 +7,34 @@ require('dotenv').config();
 
 const app = express();
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false
+}));
+
+const origenesPermitidos = [
+  'https://necro1024.github.io',
+  'http://localhost:5173'
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origenesPermitidos.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, ngrok-skip-browser-warning');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('ngrok-skip-browser-warning', 'true');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 const limitador = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -16,30 +43,7 @@ const limitador = rateLimit({
 });
 app.use('/api/', limitador);
 
-const origenesPermitidos = [
-  'https://necro1024.github.io',
-  'http://localhost:5173'
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || origenesPermitidos.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Bloqueado por política de seguridad CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'ngrok-skip-browser-warning'],
-  credentials: true
-}));
-
-app.options('*', cors());
-
-app.use((req, res, next) => {
-  res.setHeader('ngrok-skip-browser-warning', 'true');
-  next();
-});
+app.use(express.json({ limit: '50kb' }));
 
 const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'HVFSXgdn8PgPZoPJ!T$n#';
 
@@ -54,8 +58,6 @@ app.use('/api', (req, res, next) => {
   }
   next();
 });
-
-app.use(express.json({ limit: '50kb' }));
 
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;

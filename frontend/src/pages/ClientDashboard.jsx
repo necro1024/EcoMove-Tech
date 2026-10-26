@@ -26,19 +26,21 @@ export default function ClientDashboard({ user }) {
   const nombreLimpio = user.nombre ? user.nombre.replace(/\s*\([^)]*\)/g, '').trim() : 'Usuario';
 
   const fetchData = async () => {
-    try {
-      const [resVeh, resSol, resHist] = await Promise.all([
-        fetch(`${API_BASE_URL}/vehiculos/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/solicitudes/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/historial/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json())
-      ]);
-      setVehiculos(resVeh);
-      setSolicitudes(resSol);
-      setHistorial(resHist);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  try {
+    const [resVeh, resSol, resHist] = await Promise.all([
+      fetch(`${API_BASE_URL}/vehiculos/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
+      fetch(`${API_BASE_URL}/solicitudes/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
+      fetch(`${API_BASE_URL}/historial/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json())
+    ]);
+
+    setVehiculos(Array.isArray(resVeh) ? resVeh : []);
+    setSolicitudes(Array.isArray(resSol) ? resSol : []);
+    setHistorial(Array.isArray(resHist) ? resHist : []);
+
+  } catch (error) {
+    console.error('Error cargando datos del cliente:', error);
+  }
+};
 
   useEffect(() => {
     fetchData();
