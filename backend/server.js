@@ -40,7 +40,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'EcoMoveSeguro_2026_ClavePrivada';
+const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'HVFSXgdn8PgPZoPJ!T$n#';
 
 app.use('/api', (req, res, next) => {
   const claveCliente = req.headers['x-api-key'];
