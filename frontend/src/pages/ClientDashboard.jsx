@@ -5,7 +5,7 @@ import HistorialView from './HistorialView.jsx';
 import { API_BASE_URL, getHeaders } from "@/apiConfig.js";
 
 export default function ClientDashboard({ user }) {
-  const [subVista, setSubVista] = useState('inicio'); // 'inicio' | 'vehiculos' | 'seguimiento' | 'historial' | 'nueva_solicitud'
+  const [subVista, setSubVista] = useState('inicio');
   const [vehiculos, setVehiculos] = useState([]);
   const [solicitudes, setSolicitudes] = useState([]);
   const [historial, setHistorial] = useState([]);
@@ -27,18 +27,22 @@ export default function ClientDashboard({ user }) {
 
   const fetchData = async () => {
   try {
+    const config = {
+      method: 'GET',
+      headers: getHeaders()
+    };
+
     const [resVeh, resSol, resHist] = await Promise.all([
-      fetch(`${API_BASE_URL}/vehiculos/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
-      fetch(`${API_BASE_URL}/solicitudes/cliente/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json()),
-      fetch(`${API_BASE_URL}/historial/${user.referencia_id}`, { headers: getHeaders() }).then(r => r.json())
+      fetch(`${API_BASE_URL}/vehiculos/cliente/${user.referencia_id}`, config).then(r => r.json()),
+      fetch(`${API_BASE_URL}/solicitudes/cliente/${user.referencia_id}`, config).then(r => r.json()),
+      fetch(`${API_BASE_URL}/historial/${user.referencia_id}`, config).then(r => r.json())
     ]);
 
     setVehiculos(Array.isArray(resVeh) ? resVeh : []);
     setSolicitudes(Array.isArray(resSol) ? resSol : []);
     setHistorial(Array.isArray(resHist) ? resHist : []);
-
   } catch (error) {
-    console.error('Error cargando datos del cliente:', error);
+    console.error('Error al cargar datos del cliente:', error);
   }
 };
 

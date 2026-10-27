@@ -50,21 +50,23 @@ app.use('/api/', limitador);
 
 const API_KEY_SECRETA = process.env.API_SECRET_KEY || 'HVFSXgdn8PgPZoPJ!T$n#';
 
-app.use('/api', (req, res, next) => {
+app.use((req, res, next) => {
+  // 1. Dejar pasar peticiones preflight OPTIONS
   if (req.method === 'OPTIONS') {
     return next();
   }
 
-  // Rutas públicas que no requieren API Key
-  if (req.path === '/login' || req.path === '/registro-cliente') {
+  // 2. Si no es una ruta de /api, continuar
+  if (!req.originalUrl.startsWith('/api')) {
     return next();
   }
 
-  // Leer la clave admitiendo cualquier variante de capitalización
-  const claveCliente = req.headers['x-api-key'] || req.headers['X-Api-Key'] || req.get('x-api-key');
+  // 3. Obtener la clave enviada (insensible a mayúsculas/minúsculas)
+  const clientKey = req.headers['x-api-key'] || req.get('x-api-key');
 
-  if (!claveCliente || claveCliente !== API_KEY_SECRETA) {
-    console.warn(`[Seguridad] 403 Bloqueado en ${req.path}. Recibido: "${claveCliente}" | Esperado: "${API_KEY_SECRETA}"`);
+  // Depuración en terminal para diagnosticar en tiempo real:
+  if (!clientKey || clientKey !== API_KEY_SECRETA) {
+    console.log(`[AUTH 403] Ruta: ${req.originalUrl} | Header recibido: "${clientKey}" | Esperado: "${API_KEY_SECRETA}"`);
     return res.status(403).json({ error: 'Acceso no autorizado: API Key ausente o inválida' });
   }
 
